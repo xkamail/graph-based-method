@@ -10,7 +10,7 @@ buf = []
 assign = []
 
 # size = int(input("how many nodes:"))
-size = 5
+size = 7
 buf = [[0 for i in range(size)] for j in range(size)]
 assign = [[False for i in range(size)] for j in range(size)]
 
@@ -32,25 +32,25 @@ def getInput():
 # getInput()
 
 # 5x5 testdata
-buf = [
-    [0, 9, 8, 10, 0],
-    [0, 0, 12, 13, 7],
-    [0, 0, 0, 20, 0],
-    [0, 0, 0, 0, 2],
-    [0, 0, 0, 0, 0],
-]
+# buf = [
+#     [0, 9, 8, 10, 0],
+#     [0, 0, 12, 13, 7],
+#     [0, 0, 0, 20, 0],
+#     [0, 0, 0, 0, 2],
+#     [0, 0, 0, 0, 0],
+# ]
 
 
 # 7x7 testdata
-# buf = [
-#     [0, 20, 0, 0, 2, 8, 12],
-#     [0, 0, 0, 0, 2, 8, 12],
-#     [0, 0, 0, 0, 3, 10, 18],
-#     [0, 0, 0, 0, 3, 10, 18],
-#     [0, 0, 0, 0, 0, 8, 7],
-#     [0, 0, 0, 0, 0, 0, 0],
-#     [0, 0, 0, 0, 0, 0, 0],
-# ]
+buf = [
+    [0, 20, 0, 0, 2, 8, 12],
+    [0, 0, 0, 0, 2, 8, 12],
+    [0, 0, 0, 0, 3, 10, 18],
+    [0, 0, 0, 0, 3, 10, 18],
+    [0, 0, 0, 0, 0, 8, 7],
+    [0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0],
+]
 
 # show the matrix
 print(buf)
@@ -142,7 +142,6 @@ def calculatePivots():
         if (nodes[0] + 1) in x and (nodes[1] + 1) in x and (nodes[2] + 1) in x:
             continue
         cycles.append([node - 1 for node in x])
-    print("cycles", cycles)
     return cycles[:]
 
 
@@ -156,7 +155,6 @@ def findNext():
     large_of_pivots = [[0, 0] for i in range(len(pivots))]
 
     for pivot in pivots:
-        print("consider pivot:", [node + 1 for node in pivot])
         # create size-2 x 2 matrix Matrix[row][col]
         results = [0 for i in range(size)]
         largest_node_i = None
@@ -179,18 +177,32 @@ def findNext():
 
     node_to_join = None
     max_value = 0
+    index_of_pivot = -1
     for i in range(len(large_of_pivots)):
         if large_of_pivots[i][1] == 0:
             continue
         if large_of_pivots[i][1] > max_value:
             max_value = large_of_pivots[i][1]
             node_to_join = large_of_pivots[i][0]
+            index_of_pivot = i
 
     if node_to_join is None:
         print("No more nodes to join")
         return
-    print("Join node", node_to_join + 1, "with pivot", [node + 1 for node in pivot])
-    joinNode(node_to_join, pivot)
+    if index_of_pivot == -1:
+        print("invalid condition")
+        return
+    print(
+        "Join node",
+        node_to_join + 1,
+        "with pivot",
+        index_of_pivot,
+        [node + 1 for node in pivots[index_of_pivot]],
+        "with value",
+        max_value,
+        "from pivot",
+    )
+    joinNode(node_to_join, pivots[index_of_pivot])
     return
 
 
@@ -205,22 +217,16 @@ print("Nodes:", [node + 1 for node in nodes])
 
 
 G = nx.DiGraph()
-t = [3, 4, 2, 1, 5]
+t = [1, 2, 7, 3, 6, 4, 5]
 G.add_edges_from(
     [
-        # base
-        (3, 4),
-        #
-        (3, 2),
-        (2, 4),
-        #
-        (2, 1),
-        (3, 1),
-        (4, 1),
-        #
-        (5, 2),
-        (5, 1),
-        (5, 4),
+        [1, 2],
+        [2, 7],
+        [7, 3],
+        [3, 6],
+        [6, 4],
+        [4, 5],
+        [5, 1],
     ],
     weight=0,
 )
