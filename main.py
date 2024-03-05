@@ -1,71 +1,16 @@
-from itertools import combinations
+from itertools import permutations
 
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 
-
-def drawGraph():
-    G = nx.DiGraph()
-
-    G.add_edges_from(
-        [
-            (
-                3,
-                4,
-            ),
-        ],
-        weight=20,
-    )
-
-    G.add_edges_from(
-        [
-            (
-                3,
-                2,
-            ),
-        ],
-        weight=12,
-    )
-
-    G.add_edges_from(
-        [
-            (
-                2,
-                4,
-            ),
-        ],
-        weight=13,
-    )
-
-    G.add_edges_from([(2, 1)], weight=9)
-    G.add_edges_from([(3, 1)], weight=8)
-    G.add_edges_from([(4, 1)], weight=10)
-
-    # add 5 betwen 2,1,4
-    G.add_edges_from([(5, 2)], weight=7)
-    G.add_edges_from([(5, 1)], weight=0)
-    G.add_edges_from([(5, 4)], weight=2)
-
-    pos = nx.planar_layout(G)
-    nx.draw(
-        G,
-        pos,
-        with_labels=True,
-        font_weight="bold",
-        node_color="lightblue",
-    )
-
-    plt.show()
-
-
 # init graph
-G = nx.DiGraph()
 
 buf = []
 assign = []
 
-size = int(input("how many nodes:"))
+# size = int(input("how many nodes:"))
+size = 5
 buf = [[0 for i in range(size)] for j in range(size)]
 assign = [[False for i in range(size)] for j in range(size)]
 
@@ -87,25 +32,25 @@ def getInput():
 # getInput()
 
 # 5x5 testdata
-# buf = [
-#     [0, 9, 8, 10, 0],
-#     [0, 0, 12, 13, 7],
-#     [0, 0, 0, 20, 0],
-#     [0, 0, 0, 0, 2],
-#     [0, 0, 0, 0, 0],
-# ]
+buf = [
+    [0, 9, 8, 10, 0],
+    [0, 0, 12, 13, 7],
+    [0, 0, 0, 20, 0],
+    [0, 0, 0, 0, 2],
+    [0, 0, 0, 0, 0],
+]
 
 
 # 7x7 testdata
-buf = [
-    [0, 20, 0, 0, 2, 8, 12],
-    [0, 0, 0, 0, 2, 8, 12],
-    [0, 0, 0, 0, 3, 10, 18],
-    [0, 0, 0, 0, 3, 10, 18],
-    [0, 0, 0, 0, 0, 8, 7],
-    [0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0],
-]
+# buf = [
+#     [0, 20, 0, 0, 2, 8, 12],
+#     [0, 0, 0, 0, 2, 8, 12],
+#     [0, 0, 0, 0, 3, 10, 18],
+#     [0, 0, 0, 0, 3, 10, 18],
+#     [0, 0, 0, 0, 0, 8, 7],
+#     [0, 0, 0, 0, 0, 0, 0],
+#     [0, 0, 0, 0, 0, 0, 0],
+# ]
 
 # show the matrix
 print(buf)
@@ -121,6 +66,9 @@ def getLength(buf=[], i=0, j=0):
         v = buf[j][i]
     return v
 
+
+G = nx.Graph()  # graph for calculation not render
+Gx = nx.DiGraph()  # graph for render
 
 ### Step 1
 highest = 0
@@ -141,97 +89,150 @@ G.add_edges_from(
     ],
     weight=highest,
 )
+brunch = [(nodes[0] + 1, nodes[1] + 1)]
+
+
+def joinNode(node_index, wings=[0, 0, 0]):
+    if len(wings) == 2:
+        # (3, 2),
+        # (2, 4),
+        brunch.append((wings[0] + 1, node_index + 1))
+        brunch.append((node_index + 1, wings[1] + 1))
+
+    for w in sorted(wings):
+        G.add_edges_from(
+            [
+                (
+                    w + 1,
+                    node_index + 1,
+                ),
+            ],
+            weight=getLength(buf, node_index, w),
+        )
+        if len(wings) == 3:
+            start, end = 0, 0
+            if len(nodes) % 2 != 0:
+                start = w + 1
+                end = node_index + 1
+            else:
+                start = node_index + 1
+                end = w + 1
+            brunch.append((start, end))
+
+    nodes.append(node_index)
+    print("Current Nodes:", [node + 1 for node in nodes])
+    return
+
+
+def calculatePivots():
+
+    if len(nodes) <= 2:
+        # create size-2 x 2 matrix
+        print(f"create size-2 x 2 matrix")
+        return [[nodes[0], nodes[1]]]
+
+    if len(nodes) == 3:
+        return [nodes]
+    print("we have more than 3 nodes", [x + 1 for x in nodes])
+    cycles = []
+    for x in list(nx.enumerate_all_cliques(G)):
+        if len(x) != 3:
+            continue
+        # if cycle contains nodes[0], nodes[1], nodes[2]
+        if (nodes[0] + 1) in x and (nodes[1] + 1) in x and (nodes[2] + 1) in x:
+            continue
+        cycles.append([node - 1 for node in x])
+    print("cycles", cycles)
+    return cycles[:]
 
 
 # Step 2 recursive
 
-steps = []
 
+def findNext():
+    print(f"\n\n\n")
+    pivots = calculatePivots()
 
-def findChildren(toggle=False):
-    if len(nodes) >= size - 1:
-        return
+    large_of_pivots = [[0, 0] for i in range(len(pivots))]
 
-    available = 0
-    new_list = nodes[:]
-
-    comp = list(combinations(new_list, 3))
-
-    if len(nodes) == 2:
-        comp = [nodes]
-    print("comp=>", comp, "nodes=>", nodes)
-
-    for c in comp:
-        tmp = 0
-        # z is not in nodes
-        z = 0
+    for pivot in pivots:
+        print("consider pivot:", [node + 1 for node in pivot])
+        # create size-2 x 2 matrix Matrix[row][col]
+        results = [0 for i in range(size)]
+        largest_node_i = None
+        largest_length = 0
         for i in range(size):
-            s = 0
-            if i in c:
+            if i in nodes:
                 continue
-            for j in nodes:
-                w = getLength(buf, i, j)
-                s += w
-            if s > tmp:
-                tmp = s
-                z = i
-        available = z
-
-    for n in nodes:
-        w = getLength(buf, n, available)
-        # if w == 0:
-        #     continue
-        # check if start already connect to
-        nn = n + 1
-        tt = available + 1
-        start = nn
-        end = tt
-        if toggle:
-            start = nn
-            end = tt
-
-        G.add_edges_from(
-            [
-                (
-                    start,
-                    end,
-                ),
-            ],
-            weight=w,
-        )
-        if not nx.is_planar(G):
-            G.remove_edge(start, end)
+            if largest_node_i is None:
+                largest_node_i = i
+            results[i] = 0
+            for j in pivot:  # pivot is node_index
+                results[i] += getLength(buf, i, j)
+            if results[i] > largest_length:
+                largest_length = results[i]  # store the latest largest
+                largest_node_i = i  # store current node to be connect with
+        #
+        if largest_node_i is None:
             continue
-        else:
-            print("connect ", start, " to ", end, " with weight ", w)
+        large_of_pivots[pivots.index(pivot)] = [largest_node_i, largest_length]
 
-    # add z to nodes
-    nodes.append(available)
-    steps.append(available + 1)
+    node_to_join = None
+    max_value = 0
+    for i in range(len(large_of_pivots)):
+        if large_of_pivots[i][1] == 0:
+            continue
+        if large_of_pivots[i][1] > max_value:
+            max_value = large_of_pivots[i][1]
+            node_to_join = large_of_pivots[i][0]
 
-
-t = False
-
-# o = 1
-# # Step 3
-# while len(nodes) < size - 1:
-#     if o == 6:
-#         break
-#     findChildren(t)
-#     t = not t
-
-#     o = o + 1
+    if node_to_join is None:
+        print("No more nodes to join")
+        return
+    print("Join node", node_to_join + 1, "with pivot", [node + 1 for node in pivot])
+    joinNode(node_to_join, pivot)
+    return
 
 
-findChildren(False)
-findChildren(True)
-
-# Final step
+while len(nodes) < size:
+    findNext()
 
 
-pos = nx.planar_layout(G)
+#  Summary
+print("============")
+print("Summary")
+print("Nodes:", [node + 1 for node in nodes])
+
+
+G = nx.DiGraph()
+t = [3, 4, 2, 1, 5]
+G.add_edges_from(
+    [
+        # base
+        (3, 4),
+        #
+        (3, 2),
+        (2, 4),
+        #
+        (2, 1),
+        (3, 1),
+        (4, 1),
+        #
+        (5, 2),
+        (5, 1),
+        (5, 4),
+    ],
+    weight=0,
+)
+
+Gx.add_edges_from(brunch)
+
+# can you write a function to add the edges?
+print(brunch)
+
+pos = nx.planar_layout(Gx)
 nx.draw(
-    G,
+    Gx,
     pos,
     with_labels=True,
     font_weight="bold",
