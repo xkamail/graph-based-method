@@ -68,7 +68,6 @@ def getLength(buf=[], i=0, j=0):
 
 
 G = nx.Graph()  # graph for calculation not render
-Gx = nx.DiGraph()  # graph for render
 
 ### Step 1
 highest = 0
@@ -230,13 +229,20 @@ G.add_edges_from(
     ],
     weight=0,
 )
+Gx = nx.DiGraph()  # graph for render
+# [(1, 2), (1, 7), (7, 2), (1, 3), (2, 3), (7, 3), (6, 1), (6, 2), (6, 3), (1, 4), (3, 4), (7, 4), (5, 1), (5, 3), (5, 6)]
+Gx.add_edges_from(
+    brunch,
+    weight=100,
+)
 
-Gx.add_edges_from(brunch)
 
 # can you write a function to add the edges?
 print(brunch)
 
-pos = nx.planar_layout(Gx)
+pos = nx.planar_layout(
+    Gx,
+)
 nx.draw(
     Gx,
     pos,
@@ -244,5 +250,6 @@ nx.draw(
     font_weight="bold",
     node_color="lightblue",
 )
+
 
 plt.show()
