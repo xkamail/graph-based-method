@@ -10,7 +10,7 @@ buf = []
 assign = []
 
 # size = int(input("how many nodes:"))
-size = 7
+size = 5
 buf = [[0 for i in range(size)] for j in range(size)]
 assign = [[False for i in range(size)] for j in range(size)]
 
@@ -32,25 +32,25 @@ def getInput():
 # getInput()
 
 # 5x5 testdata
-# buf = [
-#     [0, 9, 8, 10, 0],
-#     [0, 0, 12, 13, 7],
-#     [0, 0, 0, 20, 0],
-#     [0, 0, 0, 0, 2],
-#     [0, 0, 0, 0, 0],
-# ]
+buf = [
+    [0, 9, 8, 10, 0],
+    [0, 0, 12, 13, 7],
+    [0, 0, 0, 20, 0],
+    [0, 0, 0, 0, 2],
+    [0, 0, 0, 0, 0],
+]
 
 
 # 7x7 testdata
-buf = [
-    [0, 20, 0, 0, 2, 8, 12],
-    [0, 0, 0, 0, 2, 8, 12],
-    [0, 0, 0, 0, 3, 10, 18],
-    [0, 0, 0, 0, 3, 10, 18],
-    [0, 0, 0, 0, 0, 8, 7],
-    [0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0],
-]
+# buf = [
+#     [0, 20, 0, 0, 2, 8, 12],
+#     [0, 0, 0, 0, 2, 8, 12],
+#     [0, 0, 0, 0, 3, 10, 18],
+#     [0, 0, 0, 0, 3, 10, 18],
+#     [0, 0, 0, 0, 0, 8, 7],
+#     [0, 0, 0, 0, 0, 0, 0],
+#     [0, 0, 0, 0, 0, 0, 0],
+# ]
 
 # show the matrix
 print(buf)
@@ -215,41 +215,65 @@ print("Summary")
 print("Nodes:", [node + 1 for node in nodes])
 
 
-G = nx.DiGraph()
-t = [1, 2, 7, 3, 6, 4, 5]
-G.add_edges_from(
-    [
-        [1, 2],
-        [2, 7],
-        [7, 3],
-        [3, 6],
-        [6, 4],
-        [4, 5],
-        [5, 1],
-    ],
-    weight=0,
-)
-Gx = nx.DiGraph()  # graph for render
-# [(1, 2), (1, 7), (7, 2), (1, 3), (2, 3), (7, 3), (6, 1), (6, 2), (6, 3), (1, 4), (3, 4), (7, 4), (5, 1), (5, 3), (5, 6)]
-Gx.add_edges_from(
-    brunch,
-    weight=100,
-)
+Gx = nx.Graph()
+
+for i, j in brunch:
+    print(f"Add edge {i} to {j}")
+    Gx.add_edges_from(
+        [
+            (
+                i,
+                j,
+            ),
+        ],
+        weight=getLength(buf, i - 1, j - 1),
+    )
 
 
-# can you write a function to add the edges?
-print(brunch)
+def calculate_triangular_positions(G):
+    # Get the nodes of the graph
+    nodes = list(Gx.nodes())
 
-pos = nx.planar_layout(
-    Gx,
-)
-nx.draw(
-    Gx,
-    pos,
-    with_labels=True,
-    font_weight="bold",
-    node_color="lightblue",
-)
+    # Define the positions for the nodes
+    # The top node is at the top of the triangle
+    # The base nodes are at the bottom
+    pos = {
+        nodes[0]: (0, 0),  # Top node
+        nodes[1]: (1, 0),  # Base node 1
+        nodes[2]: (0.5, 1),  # Base node 2
+    }
+
+    # Place node 3 in the center of the triangle formed by nodes 1, 2, and 7
+    pos[nodes[3]] = (0.5, 0.5)  # Assuming node 3 is the fourth node
+
+    # Find the nodes that are connected to all three nodes of the outer triangle
+    outer_triangle_nodes = {nodes[0], nodes[1], nodes[2]}
+    center_nodes = {nodes[3]}  # Start with node 3 as it's already placed in the center
+    for node in nodes[4:]:
+        # get nodes nightbors only frist 3 nodes
+        neighbors = list(G.neighbors(node))
+        # so we know that node is connect with 3 triangle
+        # we have to calculate the position of the node
+        # to stay inside three neighbors connected
+        neighbor_positions = [pos[n] for n in neighbors[:3]]
+        center_x = sum(x for x, y in neighbor_positions) / len(neighbor_positions)
+        center_y = sum(y for x, y in neighbor_positions) / len(neighbor_positions)
+        pos[node] = (center_x, center_y)
+
+    return pos
 
 
+pos = calculate_triangular_positions(Gx)
+
+# Draw the graph
+nx.draw_networkx_nodes(Gx, pos, node_size=500)
+nx.draw_networkx_edges(Gx, pos, width=2)
+nx.draw_networkx_labels(Gx, pos, font_size=12, font_color="black")
+
+# draw weight on edges
+labels = nx.get_edge_attributes(Gx, "weight")
+nx.draw_networkx_edge_labels(Gx, pos, edge_labels=labels)
+
+# Show the plot
+plt.axis("off")
 plt.show()
