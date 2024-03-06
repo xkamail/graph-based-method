@@ -218,7 +218,6 @@ print("Nodes:", [node + 1 for node in nodes])
 Gx = nx.Graph()
 
 for i, j in brunch:
-    print(f"Add edge {i} to {j}")
     Gx.add_edges_from(
         [
             (
