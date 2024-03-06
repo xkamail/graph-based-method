@@ -53,9 +53,10 @@ buf = [
 # ]
 
 # show the matrix
-print(buf)
+# print(buf)
 
-if len(buf) < 2:
+# for now we have to construct triangle with 3 nodes and have single center
+if len(buf) < 3:
     print("Not enough nodes")
     exit()
 
