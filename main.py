@@ -84,7 +84,7 @@ G.add_edges_from(
             nodes[1] + 1,
         ),
     ],
-    weight=highest,
+    weight=getLength(buf,nodes[0],nodes[1]),
 )
 brunch = [(nodes[0] + 1, nodes[1] + 1)]
 
